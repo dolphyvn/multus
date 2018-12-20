@@ -1,0 +1,198 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: network-attachment-definitions.k8s.cni.cncf.io
+spec:
+  group: k8s.cni.cncf.io
+  version: v1
+  scope: Namespaced
+  names:
+    plural: network-attachment-definitions
+    singular: network-attachment-definition
+    kind: NetworkAttachmentDefinition
+    shortNames:
+    - net-attach-def
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            config:
+                 type: string
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: multus
+rules:
+  - apiGroups: ["k8s.cni.cncf.io"]
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/status
+    verbs:
+      - get
+      - update
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: multus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: multus
+subjects:
+- kind: ServiceAccount
+  name: multus
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: multus
+  namespace: kube-system
+---
+# ------------------------------------------------------
+# Currently unused!
+# If you wish to customize, mount this in the 
+# daemonset @ /usr/src/multus-cni/images/70-multus.conf
+# ------------------------------------------------------
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: multus-cni-config
+  namespace: kube-system
+  labels:
+    tier: node
+    app: multus
+data:
+  kubeconfig: |
+      apiVersion: v1
+      clusters:
+      - cluster:
+          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRFNE1URXhPVEl3TlRjME9Gb1hEVEk0TVRFeE5qSXdOVGMwT0Zvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT2NsCkJreTBNU1JqcFg4UDBDWU11TkRQbjUxZmlRZHJvaVFHRUtOZ3NyWEhlRzRLSTBSb0VuSy81M0V4aUpjZk5hMTMKdzVFOGdVcEQ2b3lSU1JoVk1uTktwNWp5Y3ZucDBCOTk0MzhjYnQzYitXMHEycXhxZm0rcjJuNGhQSDNQQVh0bwp6UGJnUXpuSmhMWEFONFRUNVR6V0FEUDBUazhRZDBvTzUrdFJ1YmVYejRPKzhaM294LzEvTTdmS210V25XWmZaCnRMZDBndHVjVGxCSlZQR0g2RHpUblhIbTQ5eWZpWVQ1SEJnREU3cS9LV21ZVlhqRmw0djBTa1ROKzdhMUtVc3kKWkg4NzVQNVZQVUV1Y1V4WUd5VWt3SEVuMnVrRmpTZkxkSmZrYzhjdU94Q2FzeGh5c2RrdXBGMk9uSjkydWROMwpIYVh0MEZZVXkvdjMrTE5jcWtFQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFCUXpHbWVuNXVOV0l2em8wZG9RWHpZTXR0K2wKS0JGY29wZUJnb1gwV3M0cmNHSlgrYTdJNVB5R1JQWElPQVBQZWtPRy93czByc3ltUjZTL21LNFFzaUxLbFd6egpBdmFFTXQ1OW96WmVxbjhsbEZtR0tNOEpDRmZoL0JFU0Q5emE3UjZLVnhiQUhxK2Y2ZnBCaldnZkovRlh0VFlrClJYeHdreXhwQVJzYVkxaHlPUWJ1azRiQlBweFZtTWRvNUUxcmtVbHBYT01rSUVaOXlMUGRVQmF2Uy9aR1hsb1AKbUh4Ny9SMWRvZzBpZDZwREYxM2c2dXVDdktmaVNnYnZjYlBMVW1TSVovVE4wcDJ5Wms2NjR3cWhIOGF0eEVocAo1cmdUV2Y0R1poeCtwOXY1RkpSampJenlneTFaeDBxdWkrdC9DWFZNZ2tBYm02a28wRzVoRGJMdk5LQT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+          server: https://hxvltxfer001.ebi.ac.uk:7443
+        name: kubernetes
+      contexts:
+      - context:
+          cluster: kubernetes
+          user: kubernetes-admin
+        name: kubernetes-admin@kubernetes
+      current-context: kubernetes-admin@kubernetes
+      kind: Config
+      preferences: {}
+      users:
+      - name: kubernetes-admin
+        user:
+          client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJSXZyTTR1YlNodll3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB4T0RFeE1Ua3lNRFUzTkRoYUZ3MHhPVEV4TVRreU1EVTNOVEphTURReApGekFWQmdOVkJBb1REbk41YzNSbGJUcHRZWE4wWlhKek1Sa3dGd1lEVlFRREV4QnJkV0psY201bGRHVnpMV0ZrCmJXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQTZKVE53VHVqNStHTFFCVFgKS09kV2xSNmJ4N3ZKbmxybW5SWjJ0KzViZFdRZVlTcHhaNUUwNGthSFJEZDVqK3JlU3VWcjRKcDArbTJpN0JSbQpBNU1MM0N4YmlGTjlFSXNqY1czQjA4ZWoxQmNpRExORUIvckJ6blMvc1pxTjhramFRRUllcm00NEhBWmV4a0lRClV1aWhZMWNXQy9YSU5ZWHRhQ3BqV1ZLUTUyWm9xVHd3MlZBTjZzTXp6eXZ1eTdFN2NjeWZsVE5WRDU5WnhmdDkKSWJhbDRFUlNHOUN2QmhQR1dnTCtVc1oxaVdzSkRxMkJtK29tcW91U1M1ekFNNDZtd0lxcWZsN1NHWWxNNWFGaAp5RFZIZVdPVndtQWExa0FVdk9iTnZJQ2p5RE1TWXRUWFZ1VFhJMDNTYUQrcUR0TDRTOVdDNUxpUW94OTVzeTFECmI3alBWd0lEQVFBQm95Y3dKVEFPQmdOVkhROEJBZjhFQkFNQ0JhQXdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUgKQXdJd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFKWnpVK3RCaUNwUk9zdHlPMldIUnhQbXNkMGFXbzI4YUkxZQpRS0FpUklsWHIreVJzYU1zSEp1azRRRVlxSy9ZaXgycm9Ja09hUnFWZndBOUMzS2N3OFAzck4vUWo4dG5zL2JmCmJMb3R4VzRYajRya1B6ZHRkV1poRFdOV0E4Y1dYLytLUnZyNk1jT0ZJbXRxekJNaHF6ZEZDaWNPeElsdTFQUEMKRjRaR3czdU5UMXIxUFlLeERhM2YrL0J1NXU1WTRCOHdxbUVHQ0lQZzRJaTd0RWEzRXN2aFBJYW16Mi85VmZhbgpCdDBsaUdhK0wraVQ5bnRrcldMb2xuRkxvaUVPRFVFSkVlYktkblNUaUtST0JhRUxFbm1hYkxWQjRYRHZNbmJBClFBSUpnQTRERUhlRE9vL1M5Snc1VjRuM1NSZyt6TEMvNGN5ZSs0MWY0clMyc25JbHpjMD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+          client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBNkpUTndUdWo1K0dMUUJUWEtPZFdsUjZieDd2Sm5scm1uUloydCs1YmRXUWVZU3B4Clo1RTA0a2FIUkRkNWorcmVTdVZyNEpwMCttMmk3QlJtQTVNTDNDeGJpRk45RUlzamNXM0IwOGVqMUJjaURMTkUKQi9yQnpuUy9zWnFOOGtqYVFFSWVybTQ0SEFaZXhrSVFVdWloWTFjV0MvWElOWVh0YUNwaldWS1E1MlpvcVR3dwoyVkFONnNNenp5dnV5N0U3Y2N5ZmxUTlZENTlaeGZ0OUliYWw0RVJTRzlDdkJoUEdXZ0wrVXNaMWlXc0pEcTJCCm0rb21xb3VTUzV6QU00Nm13SXFxZmw3U0dZbE01YUZoeURWSGVXT1Z3bUFhMWtBVXZPYk52SUNqeURNU1l0VFgKVnVUWEkwM1NhRCtxRHRMNFM5V0M1TGlRb3g5NXN5MURiN2pQVndJREFRQUJBb0lCQUFHTjdRb2JrZTdjelFkeQpuRFdEeGtwYzJBR3Z1WnM3VkVzOGVUS2xmeXI3cmxCTDdsSVk0RmVhelJDaHBraFY4NEpnb2lYd0lsUUNJNUtjCldFb3gwMlIzVDIxTDBZd293ZVhpSytkMGNCM2N3YmVBQXpaaWNLVW1scGxqUlF1WGZRM3M0ek9iUFBqQytpTXQKRWRyYi95Z2d6dDdwbDVyeitEQTRDRTN5aFZGbWxJMXV1NDQ1U1NxeXFzeDV0TzdMd0twb0lxWk1SS2pOMk50dQpDMkY1K2ZTTG5NQUtlaWdnVUd1OUswcmxxeTQ3K2dONWNxOW5kVHQzRXkreHZleEV4TU5UNmhtWWFzWEhmL1pBCjUxRXR6OTlmUlVnZDV6Rm1ITEF2b2dCTm1SYTVzcEo0blgwQk9QVk9QVTRlci9lelN0TU9zM09EMmEyM0U3THcKdDJDNkdIRUNnWUVBOTRISlNBOFJpUHlxUi9wQUhkemNtUS9Ka0o1YVdSNVJESlRyTERtNHpiS1k4TDRuT2xObApraUJ1R2ZGRDlPZ2ovMjNYSnhaaU42VFpKb1RXRkRGbG13OHpRVkRERUEvYm1oNEV2NXRtWWUzblJqMHFyN0gxCnFZVk0xZEhLVkozOERrM2FLUzlCbjJmWkg4ckxlcHRpREZpMDV4RnA1bUhCczZGaGczUGdrRVVDZ1lFQThJL24KT2c2NGNqeURsdi9nZVBmSUZ5OUhhTGhiV05UMGZZcUx3RHlJSE5kcmYvWVR0dm0yRVNBYXQrd05qK0lQODcwMAo4Znl1SXhYaDk1blFQMG83SlZweGRsSzJiY0kybmVIOTZFT0crZVRUbVlXdlpJazZBS3NqeTRqQkwyb01MT1dHCitsdlRLcENzYzBnZitFaWZYM2lxUDFvbERkNjdvZEp1REVwNDRPc0NnWUJLQUtFNURXQlYwQTN0eFhJa082UXQKazUzVndyTUswRmkxWlZWSGZONjNpZjNXaFZSZlNRNG1lZEhScWVTQ3RtSUUva2VGSlZrcWYveDVXdUJUVzAyZwo1aE9TSk42ZHo4LytMWm1IM0tQcEJlUFBpWHhZMmVHMDFPbGJTUVd3OVNlbTh6b1dkRTJ2cHJJeG9rWGltOURlCkZpdklwdGsrQzk2Sm9lZnhFTldFN1FLQmdRQ0RDcUMycTVZbUJIamFKSUN1NUtzR2xpYWNFUEVScnMrUUk0eUYKSjNRdDRkc1pWWDdmeVo4NExQamcvNkZUbzUxMDlMaUdxVkppb21UNWI3eFUvYWJDYmtZb1lsNGw1QW5FYjNyVQpyeFF6eEViUDlsYll1VGZ6YlVhT2RPeG5XNmxPTzZvUGJ6M1VqZ0tpdWNOUWlKN29idDZ1cS9oTFdlMXo5U0VsCmFOdjRDUUtCZ1FET2tJZ0cxbW0xendqazFEMU1NNG1HRWtDeWltNGVQT1Nnd0tNRVE1V0FSaG9HQjlLU21FSFAKaGxHTEFCSnh5VEhaMW4ySHBRbHRwMDFxQlR4MlczMFRwaGt0UXk5NFMwaXYvOFJ2a2VoZlNvb2hua2dLa1NDagpoT3JuZmtPTWlFTm95eGlmMWVNUG1SbzIrbVYxK2hXRkl3cGVVS003djdrN1I0bXlEbVhubFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+  cni-conf.json: |
+
+    {
+          "name": "multus-networks",
+          "type": "multus",
+          "delegates": [
+            {
+      "type": "bridge",
+      "bridge": "ens224",
+      "isDefaultGateway": true,
+      "forceAddress": false,
+      "ipMasq": true,
+      "hairpinMode": true,
+      "ipam": {
+        "type": "host-local",
+        "subnet": "10.34.10.0/24"
+      }
+          },
+            {
+              "type": "calico",
+              "masterplugin": true,
+              "log_level": "debug",
+              "datastore_type": "kubernetes",
+              "nodename": "__KUBERNETES_NODE_NAME__",
+              "mtu": 1500,
+              "ipam": {
+                "type": "host-local",
+                "subnet": "usePodCidr"
+              },
+              "policy": {
+                  "type": "k8s",
+                  "k8s_auth_token": "/var/run/secrets/kubernetes.io/serviceaccount/token"
+              },
+              "kubernetes": {
+                  "k8s_api_root": "https://hxvltxfer001.ebi.ac.uk:7443",
+                  "kubeconfig": "/root/kubeconfig"
+              }
+            }
+          ]
+        }
+    }
+# -------------- for openshift.
+# "delegates": [{
+#   "type": "openshift-sdn",
+#   "name:" "openshift.1",
+#   "masterplugin": true
+# }],
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kube-multus-ds-amd64
+  namespace: kube-system
+  labels:
+    tier: node
+    app: multus
+spec:
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: multus
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      serviceAccountName: multus
+      containers:
+      - name: kube-multus
+        image: nfvpe/multus:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: kubeconfig
+          subPath: kubeconfig
+          mountPath: /root/kubeconfig
+        - name: cni
+          mountPath: /host/etc/cni/net.d
+        - name: cnibin
+          mountPath: /host/opt/cni/bin
+      volumes:
+        - name: cni
+          hostPath:
+            path: /etc/cni/net.d
+        - name: cnibin
+          hostPath:
+            path: /opt/cni/bin
+        - name: multus-cfg
+          configMap:
+            name: multus-cni-config
+        - name: kubeconfig
+          configMap:
+            name: multus-cni-config

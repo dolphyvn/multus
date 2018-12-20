@@ -1,0 +1,69 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: networks.kubernetes.com
+spec:
+  # group name to use for REST API: /apis/<group>/<version>
+  group: kubernetes.com
+  # version name to use for REST API: /apis/<group>/<version>
+  version: v1
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: networks
+    # singular name to be used as an alias on the CLI and for display
+    singular: network
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: Network
+    # shortNames allow shorter string to match your resource on the CLI
+    shortNames:
+    - net
+
+---
+apiVersion: "kubernetes.com/v1"
+# apiVersion: "kubernetes.cni.cncf.io/v1"
+kind: Network
+metadata:
+  name: external
+spec: 
+  config: '{
+            "cniVersion": "0.3.0",
+            "type": "macvlan",
+            "master": "ens224",
+            "ipam": {
+                "type": "host-local",
+                "subnet": "10.34.10.0/24",
+                "rangeStart": "10.34.10.150",
+                "rangeEnd": "10.34.10.250",
+                "routes": [
+                    { "dst": "0.0.0.0/0" }
+                ],
+                "gateway": "10.34.10.1"
+            }
+        }'
+# ---
+# apiVersion: "kubernetes.com/v1"
+# # apiVersion: "kubernetes.cni.cncf.io/v1"
+# kind: Network
+# metadata:
+#   name: ens224
+# spec: 
+#   config: '{
+#             "cniVersion": "0.3.0",
+#             "type": "macvlan",
+#             "master": "ens224",
+#             "name": "macvlan.1",
+#             "mode": "bridge",
+#             "ipam": {
+#                 "type": "dhcp",
+#                 "subnet": "10.34.10.0/24",
+#                 "rangeStart": "10.34.10.150",
+#                 "rangeEnd": "10.34.10.250",
+#                 "routes": [
+#                     { "dst": "0.0.0.0/0" }
+#                 ],
+#                 "gateway": "10.34.10.1"
+#             }
+#         }'
