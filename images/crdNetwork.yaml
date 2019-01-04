@@ -32,6 +32,7 @@ spec:
             "cniVersion": "0.3.0",
             "type": "macvlan",
             "master": "ens224",
+            "isDefaultGateway":true,
             "mode": "bridge",
             "ipam": {
                 "type": "host-local",
