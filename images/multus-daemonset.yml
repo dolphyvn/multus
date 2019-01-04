@@ -61,51 +61,55 @@
 #     verbs:
 #       - get
 #       - update
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: multus
-rules:
-  - apiGroups: ["ebi.cni.k8s.io"]
-    resources:
-      - '*'
-    verbs:
-      - '*'
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-      - pods/status
-    verbs:
-      - get
-      - update
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: multus
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: multus
-subjects:
-- kind: ServiceAccount
-  name: multus
-  namespace: kube-system
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: multus
-  namespace: kube-system
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: multus
+# rules:
+#   - apiGroups: ["k8s.cni.cncf.io"]
+#     resources:
+#       - '*'
+#     verbs:
+#       - '*'
+#   - apiGroups:
+#       - ""
+#     resources:
+#       - namespace
+#       - pods
+#       - pods/status
+#     verbs:
+#       - get
+#       - update
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: multus
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: multus
+# subjects:
+# - kind: ServiceAccount
+#   name: multus
+#   namespace: kube-system
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: multus
+#   namespace: kube-system
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: pod
-  # annotations:
-  #   ebi.cni.k8s.io/networks: external
+  namespace: ftp
+  annotations:
+    k8s.v1.cni.cncf.io/networks: external@ens224m
 spec:
+  nodeSelector:
+    apps: ftp1
   containers:
   - name: pod1
     image: docker.io/centos/tools:latest
